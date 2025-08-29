@@ -26,7 +26,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-.streamlit/
 data/*.csv
 data/*.xlsx
 !data/sample/*.csv

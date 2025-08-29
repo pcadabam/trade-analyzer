@@ -1,0 +1,12 @@
+[theme]
+# Set a professional teal-blue as primary color instead of default red
+primaryColor = "#1e88e5"  # Professional blue
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f8f9fa"
+textColor = "#262730"
+
+# Alternative color options (comment/uncomment as desired):
+# primaryColor = "#1abc9c"  # Teal green
+# primaryColor = "#2563eb"  # Modern blue
+# primaryColor = "#059669"  # Success green
+# primaryColor = "#7c3aed"  # Purple

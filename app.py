@@ -582,9 +582,9 @@ def main():
         col1, col2 = st.columns(2, gap="medium")
         
         with col1:
-            # Mixed Portfolio Trader - Secondary button (normal)
+            # Mixed Portfolio Trader - Primary button (uses theme color)
             name, info = demo_items[0]
-            if st.button(f"📈 {name}", key=f"demo_0", use_container_width=True, type="secondary"):
+            if st.button(f"📈 {name}", key=f"demo_0", use_container_width=True, type="primary"):
                 parser = TradeParser()
                 trades_df = parser.parse_csv(info["file"])
                 st.session_state.trades_data = trades_df
@@ -596,9 +596,9 @@ def main():
             st.caption(f"*Stocks: {info['details']}*")
         
         with col2:
-            # Tech Trader - Secondary button (normal)
+            # Tech Trader - Primary button (uses theme color)
             name, info = demo_items[1]
-            if st.button(f"📈 {name}", key=f"demo_1", use_container_width=True, type="secondary"):
+            if st.button(f"📈 {name}", key=f"demo_1", use_container_width=True, type="primary"):
                 parser = TradeParser()
                 trades_df = parser.parse_csv(info["file"])
                 st.session_state.trades_data = trades_df
@@ -615,9 +615,9 @@ def main():
         col3, col4 = st.columns(2, gap="medium")
         
         with col3:
-            # Bank Trader - Secondary button (normal)
+            # Bank Trader - Primary button (uses theme color)
             name, info = demo_items[2]
-            if st.button(f"📈 {name}", key=f"demo_2", use_container_width=True, type="secondary"):
+            if st.button(f"📈 {name}", key=f"demo_2", use_container_width=True, type="primary"):
                 parser = TradeParser()
                 trades_df = parser.parse_csv(info["file"])
                 st.session_state.trades_data = trades_df
@@ -629,9 +629,9 @@ def main():
             st.caption(f"*Stocks: {info['details']}*")
         
         with col4:
-            # Conservative Trader - Secondary button (normal)
+            # Conservative Trader - Primary button (uses theme color)
             name, info = demo_items[3]
-            if st.button(f"📈 {name}", key=f"demo_3", use_container_width=True, type="secondary"):
+            if st.button(f"📈 {name}", key=f"demo_3", use_container_width=True, type="primary"):
                 parser = TradeParser()
                 trades_df = parser.parse_csv(info["file"])
                 st.session_state.trades_data = trades_df
