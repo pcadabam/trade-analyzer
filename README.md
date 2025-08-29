@@ -69,9 +69,55 @@ uv run streamlit run app.py
 
 3. **Upload your CSV** and explore insights
 
-## Sample Data
+## Sample Data & Demo Generation
 
-A sample CSV is provided at `data/sample/tradebook-SIL558-EQ.csv` for testing.
+### Pre-built Demo Files
+- `data/demo/demo_tradebook.csv` - Mixed portfolio (30 days)
+- `data/demo/tech_trader_demo.csv` - Tech-focused aggressive trader (45 days) 
+- `data/demo/bank_trader_demo.csv` - Banking sector swing trader (60 days)
+- `data/demo/conservative_trader_demo.csv` - Conservative long-term trader (90 days)
+
+### Generate Custom Demo Data
+Use the CLI tool to create realistic demo data with actual market prices:
+
+```bash
+# Generate tech sector demo
+uv run python generate_demo_cli.py \
+  --stocks TCS,INFY,WIPRO,TECHM \
+  --days 45 \
+  --output data/demo/my_tech_demo.csv \
+  --win-rate 0.52 \
+  --intraday-ratio 0.8 \
+  --avg-quantity 40
+
+# Generate banking sector demo  
+uv run python generate_demo_cli.py \
+  --stocks HDFC,ICICIBANK,AXISBANK,SBIN \
+  --days 60 \
+  --output data/demo/my_bank_demo.csv \
+  --win-rate 0.64 \
+  --intraday-ratio 0.4 \
+  --avg-quantity 35
+
+# Generate diversified portfolio
+uv run python generate_demo_cli.py \
+  --stocks RELIANCE,TCS,HDFC,INFY,ICICIBANK \
+  --days 30 \
+  --output data/demo/my_portfolio_demo.csv
+```
+
+**CLI Options:**
+- `--stocks`: Comma-separated stock names (see available stocks below)
+- `--days`: Number of days back to generate data (default: 30)
+- `--win-rate`: Win rate percentage 0.0-1.0 (default: 0.55)
+- `--intraday-ratio`: Ratio of intraday vs swing trades (default: 0.6)
+- `--avg-quantity`: Average shares per trade (default: 30)
+- `--output`: Output CSV filename
+
+**Available Stocks:** RELIANCE, TCS, INFY, HDFC, ICICIBANK, WIPRO, TECHM, HCLTECH, AXISBANK, SBIN
+
+### Original Sample Data
+A sample CSV is also provided at `data/sample/tradebook-SIL558-EQ.csv` for testing.
 
 ## Data Sources
 
