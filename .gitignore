@@ -36,3 +36,4 @@ data/*.xlsx
 .vscode/
 *.sqlite
 *.db
+.claude/settings.local.json

@@ -2,13 +2,12 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 
 from src.core.trade_parser import TradeParser
 from src.core.trade_matcher import TradeMatcher
 from src.data.price_fetcher import PriceFetcher
-from src.insights.insight_generator import InsightGenerator
 from src.insights.trading_coach import TradingCoach
 
 logging.basicConfig(level=logging.INFO)
@@ -390,128 +389,6 @@ def generate_stock_focus_content(card):
     </div>
     """
 
-def display_coach_card(card: dict, wide=False):
-    """Display a single coaching insight card - concise and elegant"""
-    card_type = card.get('type', '')
-    
-    # Card styling
-    if card_type in ['performance_summary']:
-        bg_color = '#e8f5e8'
-        text_color = '#2e7d32'
-    elif card_type in ['winning_patterns', 'strategy_leaderboard']:
-        bg_color = '#e3f2fd' 
-        text_color = '#1565c0'
-    elif card_type in ['top_mistakes', 'behavioral_bias']:
-        bg_color = '#ffebee'
-        text_color = '#c62828'
-    else:
-        bg_color = '#f3e5f5'
-        text_color = '#7b1fa2'
-    
-    # Card container with proper styling
-    with st.container():
-        st.markdown(f"""
-        <div style="
-            background: {bg_color};
-            border-radius: 12px;
-            padding: 20px;
-            margin: 10px 0;
-            border: 1px solid rgba(0,0,0,0.1);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        ">
-            <h4 style="margin: 0 0 12px 0; color: {text_color};">{card['title']}</h4>
-        """, unsafe_allow_html=True)
-        
-        # Concise card-specific content
-        if card_type == 'performance_summary':
-            display_compact_performance_card(card)
-        elif card_type == 'winning_patterns':
-            display_compact_winning_patterns_card(card)
-        elif card_type == 'top_mistakes':
-            display_compact_mistakes_card(card)
-        elif card_type == 'behavioral_bias':
-            display_compact_behavioral_card(card)
-        elif card_type == 'whatif_analysis':
-            display_compact_whatif_card(card)
-        elif card_type == 'strategy_leaderboard':
-            display_compact_strategy_card(card)
-        elif card_type == 'time_performance':
-            display_compact_time_performance_card(card)
-        elif card_type == 'stock_focus':
-            display_compact_stock_focus_card(card)
-        
-        # Single line insight
-        st.markdown(f"<p style='margin: 8px 0 0 0; font-weight: 500; color: {text_color};'>💡 {card.get('insight', '')}</p>", unsafe_allow_html=True)
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-
-def display_compact_performance_card(card: dict):
-    """Compact performance summary"""
-    metrics = card.get('metrics', {})
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("P&L", f"₹{metrics.get('net_pnl', 0):,.0f}", delta=None)
-    with col2:
-        st.metric("Win Rate", f"{metrics.get('win_rate', 0):.0f}%", delta=None)
-    with col3:
-        st.metric("Avg Hold", metrics.get('avg_hold_time', 'N/A'), delta=None)
-
-def display_compact_winning_patterns_card(card: dict):
-    """Compact winning patterns"""
-    pattern = card.get('pattern', {})
-    st.markdown(f"**{pattern.get('win_rate', 0):.0f}% win rate** • {pattern.get('trade_count', 0)} trades")
-    st.markdown(f"Entry: {pattern.get('entry_time', 'Anytime')} • Hold: {pattern.get('hold_duration', 'Variable')}")
-
-def display_compact_mistakes_card(card: dict):
-    """Compact mistakes display"""
-    mistakes = card.get('mistakes', [])
-    total_impact = card.get('total_impact', 0)
-    if mistakes:
-        st.markdown(f"**₹{total_impact:,.0f} lost** from {len(mistakes)} patterns")
-        st.markdown(f"Top issue: {mistakes[0]['mistake']}")
-
-def display_compact_behavioral_card(card: dict):
-    """Compact behavioral bias"""
-    biases = card.get('biases', [])
-    if biases:
-        st.markdown(f"**{len(biases)} patterns detected**")
-        st.markdown(f"• {biases[0][:50]}..." if len(biases[0]) > 50 else f"• {biases[0]}")
-    else:
-        st.markdown("**No major biases detected**")
-
-def display_compact_whatif_card(card: dict):
-    """Compact what-if analysis"""
-    suggestions = card.get('suggestions', [])
-    total_opportunity = card.get('total_opportunity', 0)
-    if suggestions:
-        st.markdown(f"**₹{total_opportunity:,.0f} potential**")
-        st.markdown(f"• {suggestions[0][:60]}...")
-
-def display_compact_strategy_card(card: dict):
-    """Compact strategy leaderboard"""
-    best = card.get('best_strategy', {})
-    if best:
-        st.markdown(f"**Best: {best['name']}**")
-        st.markdown(f"{best['win_rate']:.0f}% win rate • {best['roi']:.1f}% ROI")
-
-def display_compact_time_performance_card(card: dict):
-    """Compact time performance"""
-    best = card.get('best_window', {})
-    worst = card.get('worst_window', {})
-    if best and worst:
-        st.markdown(f"**Best: {best['time']}** ({best['roi']:+.1f}%)")
-        st.markdown(f"**Worst: {worst['time']}** ({worst['roi']:+.1f}%)")
-
-def display_compact_stock_focus_card(card: dict):
-    """Compact stock focus"""
-    champion = card.get('champion_stock', {})
-    avoid = card.get('avoid_stock', {})
-    if champion:
-        st.markdown(f"**Champion: {champion['symbol']}**")
-        st.markdown(f"₹{champion['pnl']:,.0f} • {champion['win_rate']:.0f}% win rate")
-    if avoid:
-        st.markdown(f"**Avoid: {avoid['symbol']}** (₹{avoid['pnl']:,.0f} loss)")
-
 def main():
     # Initialize session state
     if 'data_loaded' not in st.session_state:
@@ -622,82 +499,6 @@ def main():
             - **order_id**: Unique order identifier
             """)
 
-def display_overview(closed_trades: pd.DataFrame, stats: dict):
-    st.header("📊 Portfolio Overview")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric(
-            "Total P&L",
-            f"₹{stats['total_pnl']:,.2f}",
-            delta=f"{stats['total_pnl']/stats['total_volume']*100:.2f}%" if stats['total_volume'] > 0 else "0%"
-        )
-    
-    with col2:
-        st.metric(
-            "Win Rate",
-            f"{stats['win_rate']:.1f}%",
-            delta=f"{stats['winning_trades']} wins / {stats['losing_trades']} losses"
-        )
-    
-    with col3:
-        st.metric(
-            "Avg Trade P&L",
-            f"₹{stats['avg_pnl']:,.2f}",
-            delta=f"Max: ₹{stats['max_profit']:,.2f}"
-        )
-    
-    with col4:
-        st.metric(
-            "Avg Hold Time",
-            f"{stats['avg_hold_hours']:.1f} hours",
-            delta=f"{stats['total_trades']} closed trades"
-        )
-    
-    st.markdown("---")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        fig_pnl = go.Figure()
-        closed_trades['cumulative_pnl'] = closed_trades['gross_pnl'].cumsum()
-        
-        fig_pnl.add_trace(go.Scatter(
-            x=closed_trades['exit_datetime'],
-            y=closed_trades['cumulative_pnl'],
-            mode='lines+markers',
-            name='Cumulative P&L',
-            line=dict(color='green' if closed_trades['cumulative_pnl'].iloc[-1] > 0 else 'red')
-        ))
-        
-        fig_pnl.update_layout(
-            title="Cumulative P&L Over Time",
-            xaxis_title="Date",
-            yaxis_title="P&L (₹)",
-            height=400
-        )
-        st.plotly_chart(fig_pnl, width='stretch')
-    
-    with col2:
-        symbol_pnl = closed_trades.groupby('symbol')['gross_pnl'].sum().sort_values(ascending=True).tail(10)
-        
-        fig_symbol = go.Figure()
-        fig_symbol.add_trace(go.Bar(
-            x=symbol_pnl.values,
-            y=symbol_pnl.index,
-            orientation='h',
-            marker_color=['green' if x > 0 else 'red' for x in symbol_pnl.values]
-        ))
-        
-        fig_symbol.update_layout(
-            title="Top 10 Stocks by P&L",
-            xaxis_title="P&L (₹)",
-            yaxis_title="Symbol",
-            height=400
-        )
-        st.plotly_chart(fig_symbol, width='stretch')
-
 def display_trade_analysis(closed_trades: pd.DataFrame):
     st.header("📈 Trade Analysis")
     
@@ -786,34 +587,6 @@ def display_trade_analysis(closed_trades: pd.DataFrame):
         styled_df,
         width='stretch'
     )
-
-def display_insights(closed_trades: pd.DataFrame):
-    st.header("💡 Trading Insights")
-    
-    generator = InsightGenerator()
-    insights = generator.generate_insights(closed_trades)
-    
-    insight_categories = {
-        'exit_optimization': '🎯 Exit Optimization',
-        'timing': '⏰ Timing Patterns',
-        'stock_selection': '📊 Stock Selection',
-        'risk_management': '⚠️ Risk Management',
-        'behavioral': '🧠 Behavioral Patterns'
-    }
-    
-    for category, title in insight_categories.items():
-        category_insights = [i for i in insights if i['type'] == category]
-        
-        if category_insights:
-            st.subheader(title)
-            
-            for insight in category_insights:
-                with st.expander(f"💡 {insight['title']}"):
-                    st.markdown(f"**Finding:** {insight['description']}")
-                    st.markdown(f"**Action:** {insight['action']}")
-                    
-                    if 'data' in insight:
-                        st.json(insight['data'])
 
 def display_whatif_analysis(closed_trades: pd.DataFrame):
     st.header("🔍 What-If Analysis")

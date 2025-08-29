@@ -22,8 +22,11 @@ class MultiSourcePriceFetcher:
             'alpha_vantage',     # Last resort - has rate limits (25 calls/day)
         ]
         
-        # API keys (users can set these as environment variables)
+        # Load environment variables from .env file
         import os
+        from dotenv import load_dotenv
+        
+        load_dotenv()  # Load .env file
         self.alpha_vantage_key = os.getenv('ALPHA_VANTAGE_API_KEY')
         
         # Rate limiting
