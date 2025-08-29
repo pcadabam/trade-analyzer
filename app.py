@@ -393,111 +393,344 @@ def main():
     # Initialize session state
     if 'data_loaded' not in st.session_state:
         st.session_state.data_loaded = False
+    if 'show_upload_modal' not in st.session_state:
+        st.session_state.show_upload_modal = False
+    if 'show_demo_modal' not in st.session_state:
+        st.session_state.show_demo_modal = False
     
-    # Show title and uploader only if no data is loaded
-    if not st.session_state.data_loaded:
-        st.title("💰 TradeCoach")
+    # Fixed header - always shown
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col1:
+        # Use custom HTML for TradeCoach brand heading with JavaScript click handler
+        st.markdown("""
+        <style>
+        .tradecoach-brand {
+            color: #262730;
+            font-size: 3rem;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            margin: 0;
+            padding: 8px 0;
+            line-height: 1.2;
+            transition: color 0.2s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        }
+        .tradecoach-brand:hover {
+            color: #0066cc;
+        }
+        .tradecoach-brand:active {
+            color: #004080;
+        }
+        </style>
         
-        # File uploader - always expanded when shown
-        with st.expander("📁 Upload Trading Data", expanded=True):
-            uploaded_file = st.file_uploader(
-                "Please upload a Zerodha trade CSV file to begin analysis",
-                type=['csv'],
-                help="Upload your Zerodha trade export CSV",
-                key='file_uploader'
-            )
-    else:
-        # Show header with title and upload button aligned
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.title("💰 TradeCoach")
-        with col2:
-            # Add spacing to align with title
-            st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-            if st.button("📁 Upload Trading Data", use_container_width=True):
-                st.session_state.data_loaded = False
+        <h1 class="tradecoach-brand" onclick="
+            // Use Streamlit's session state to trigger reload
+            const event = new CustomEvent('streamlit:rerun');
+            window.parent.document.dispatchEvent(event);
+        ">💰 TradeCoach</h1>
+        """, unsafe_allow_html=True)
+        
+        # Hidden button to handle the actual reload functionality
+        if 'brand_clicked' in st.session_state and st.session_state.brand_clicked:
+            st.session_state.data_loaded = False
+            st.session_state.show_upload_modal = False
+            st.session_state.show_demo_modal = False
+            if 'demo_file' in st.session_state:
+                del st.session_state.demo_file
+            if 'trades_data' in st.session_state:
+                del st.session_state.trades_data
+            st.session_state.brand_clicked = False
+            st.rerun()
+        
+
+    
+    with col2:
+        if st.button("📁 Upload Trading Data", use_container_width=True, type="secondary"):
+            st.session_state.show_upload_modal = True
+            st.session_state.show_demo_modal = False
+    
+    with col3:
+        if st.button("🎯 Try Demo Data", use_container_width=True, type="secondary"):
+            st.session_state.show_demo_modal = True
+            st.session_state.show_upload_modal = False
+    
+    # Upload Section (replaces modal)
+    if st.session_state.show_upload_modal:
+        st.markdown("---")
+        
+        # Header with X close button aligned to right edge
+        st.markdown("""
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; padding: 0;">📁 Upload Your Trading Data</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # X button in top right corner
+        col_spacer, col_x = st.columns([11, 1]) 
+        with col_x:
+            if st.button("✕", key="close_upload", help="Close"):
+                st.session_state.show_upload_modal = False
                 st.rerun()
         
-        # Get the uploaded file from the widget
-        uploaded_file = st.session_state.get('file_uploader')
+        # Move X button to absolute position
+        st.markdown("""
+        <style>
+        button[data-testid="baseButton-secondary"][title="Close"]:last-of-type {
+            position: absolute;
+            right: 20px;
+            margin-top: -60px;
+            z-index: 999;
+            background: #f8f9fa !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 50% !important;
+            width: 30px !important;
+            height: 30px !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("Upload your Zerodha trade CSV file to begin analysis")
+        
+        uploaded_file = st.file_uploader(
+            "Choose CSV file",
+            type=['csv'],
+            help="Upload your Zerodha trade export CSV",
+            key="upload_file_input"
+        )
+        
+        # Auto-analyze when file is uploaded
+        if uploaded_file is not None:
+            try:
+                with st.spinner("Analyzing your trades..."):
+                    parser = TradeParser()
+                    trades_df = parser.parse_csv(uploaded_file)
+                    st.session_state.trades_data = trades_df
+                    st.session_state.data_loaded = True
+                    st.session_state.show_upload_modal = False
+                    st.rerun()
+            except Exception as e:
+                st.error(f"Error processing file: {str(e)}")
     
-    if uploaded_file is not None and not st.session_state.data_loaded:
-        try:
-            parser = TradeParser()
-            trades_df = parser.parse_csv(uploaded_file)
-            
-            # Mark data as loaded and trigger rerun to show dashboard
-            st.session_state.data_loaded = True
-            st.session_state.trades_data = trades_df
+    # Demo Section (replaces modal)  
+    elif st.session_state.show_demo_modal:
+        st.markdown("---")
+        
+        # Header with X close button aligned to right edge
+        st.markdown("""
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; padding: 0;">🎯 Try Demo Trading Data</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # X button in top right corner
+        col_spacer, col_x = st.columns([11, 1])
+        with col_x:
+            if st.button("✕", key="close_demo", help="Close"):
+                st.session_state.show_demo_modal = False
+                st.rerun()
+        st.markdown("**Experience the Trading Coach with realistic demo datasets:**")
+        
+        demo_files = {
+            "Mixed Portfolio Trader": {
+                "file": "data/demo/demo_tradebook.csv",
+                "description": "📊 Diversified stocks • 30 days • 58% win rate",
+                "details": "RELIANCE, TCS, HDFC, INFY, ICICIBANK"
+            },
+            "Tech Trader (Aggressive)": {
+                "file": "data/demo/tech_trader_demo.csv", 
+                "description": "💻 IT stocks • 45 days • 48% win rate • 80% intraday",
+                "details": "TCS, INFY, WIPRO, TECHM"
+            },
+            "Bank Trader (Swing)": {
+                "file": "data/demo/bank_trader_demo.csv",
+                "description": "🏦 Banking stocks • 60 days • 61% win rate • Swing trading",
+                "details": "HDFC, ICICIBANK, AXISBANK, SBIN"
+            },
+            "Conservative Trader": {
+                "file": "data/demo/conservative_trader_demo.csv",
+                "description": "🛡️ Blue chips • 90 days • 68% win rate • Long-term holds",
+                "details": "RELIANCE, HDFC, ICICIBANK"
+            }
+        }
+        
+        # Create 2x2 grid layout for demo buttons
+        demo_items = list(demo_files.items())
+        
+        # Use Streamlit's built-in button types - they have nice styling already
+        st.markdown("""
+        <style>
+        /* Keep demo buttons simple - let Streamlit handle the styling */
+        .stButton > button {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .stButton > button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # First row - 2 columns
+        col1, col2 = st.columns(2, gap="medium")
+        
+        with col1:
+            # Mixed Portfolio Trader - Secondary button (normal)
+            name, info = demo_items[0]
+            if st.button(f"📈 {name}", key=f"demo_0", use_container_width=True, type="secondary"):
+                parser = TradeParser()
+                trades_df = parser.parse_csv(info["file"])
+                st.session_state.trades_data = trades_df
+                st.session_state.demo_file = info["file"]
+                st.session_state.data_loaded = True
+                st.session_state.show_demo_modal = False
+                st.rerun()
+            st.caption(info["description"])
+            st.caption(f"*Stocks: {info['details']}*")
+        
+        with col2:
+            # Tech Trader - Secondary button (normal)
+            name, info = demo_items[1]
+            if st.button(f"📈 {name}", key=f"demo_1", use_container_width=True, type="secondary"):
+                parser = TradeParser()
+                trades_df = parser.parse_csv(info["file"])
+                st.session_state.trades_data = trades_df
+                st.session_state.demo_file = info["file"]
+                st.session_state.data_loaded = True
+                st.session_state.show_demo_modal = False
+                st.rerun()
+            st.caption(info["description"])
+            st.caption(f"*Stocks: {info['details']}*")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Second row - 2 columns  
+        col3, col4 = st.columns(2, gap="medium")
+        
+        with col3:
+            # Bank Trader - Secondary button (normal)
+            name, info = demo_items[2]
+            if st.button(f"📈 {name}", key=f"demo_2", use_container_width=True, type="secondary"):
+                parser = TradeParser()
+                trades_df = parser.parse_csv(info["file"])
+                st.session_state.trades_data = trades_df
+                st.session_state.demo_file = info["file"]
+                st.session_state.data_loaded = True
+                st.session_state.show_demo_modal = False
+                st.rerun()
+            st.caption(info["description"])
+            st.caption(f"*Stocks: {info['details']}*")
+        
+        with col4:
+            # Conservative Trader - Secondary button (normal)
+            name, info = demo_items[3]
+            if st.button(f"📈 {name}", key=f"demo_3", use_container_width=True, type="secondary"):
+                parser = TradeParser()
+                trades_df = parser.parse_csv(info["file"])
+                st.session_state.trades_data = trades_df
+                st.session_state.demo_file = info["file"]
+                st.session_state.data_loaded = True
+                st.session_state.show_demo_modal = False
+                st.rerun()
+            st.caption(info["description"])
+            st.caption(f"*Stocks: {info['details']}*")
+        
+        if st.button("Cancel", use_container_width=True):
+            st.session_state.show_demo_modal = False
             st.rerun()
-        except Exception as e:
-            st.error(f"Error processing file: {str(e)}")
-            
-    elif st.session_state.data_loaded and 'trades_data' in st.session_state:
-        # Show the dashboard directly
-        trades_df = st.session_state.trades_data
-        
-        try:
-            st.success(f"✅ Loaded {len(trades_df)} trades")
-            
-            matcher = TradeMatcher()
-            closed_trades = matcher.match_trades(trades_df)
-            
-            if closed_trades.empty:
-                st.warning("No closed trades found in the data")
-                return
-            
-            summary_stats = matcher.get_summary_stats(closed_trades)
-            
-            # Main Trading Coach Dashboard - Now at the top!
-            st.markdown("## Overview")
-            st.markdown("*Here's what's working, what's not, and how to improve*")
-            
-            # Generate coaching insights
-            coach = TradingCoach()
-            coach_insights = coach.generate_coach_insights(closed_trades)
-            
-            # Display coach cards in a grid
-            display_coach_dashboard(coach_insights, closed_trades)
-            
-            # Advanced analysis tabs (moved to bottom)
-            st.markdown("---")
-            st.markdown("### 🔬 Advanced Analysis")
-            
-            tab1, tab2, tab3 = st.tabs([
-                "📈 Trade Analysis", 
-                "🔍 What-If Analysis",
-                "📋 All Trade Details"
-            ])
-            
-            with tab1:
-                display_trade_analysis(closed_trades)
-            
-            with tab2:
-                display_whatif_analysis(closed_trades)
-            
-            with tab3:
-                display_trade_details(closed_trades)
-                
-        except Exception as e:
-            st.error(f"Error processing file: {str(e)}")
-            logger.error(f"Error: {str(e)}", exc_info=True)
     
-    # Show format help when no data is loaded
+    # Show help text when no data is loaded
     if not st.session_state.data_loaded:
-        st.info("Please upload a Zerodha trade CSV file to begin analysis")
+        st.markdown("<br><br>", unsafe_allow_html=True)
         
-        with st.expander("📝 Expected CSV Format"):
-            st.markdown("""
-            Your CSV should contain these columns:
-            - **symbol**: Stock symbol (e.g., RELIANCE, TCS)
-            - **trade_date**: Date of trade (YYYY-MM-DD)
-            - **order_execution_time**: Time of execution (HH:MM:SS)
-            - **trade_type**: Buy or Sell
-            - **quantity**: Number of shares
-            - **price**: Execution price
-            - **order_id**: Unique order identifier
-            """)
+        # Help text with arrow pointing up to buttons
+        st.markdown("""
+        <div style="text-align: center; margin-top: 100px;">
+            <div style="font-size: 4rem; animation: bounce 2s infinite;">👆</div>
+            <h2 style="color: #666; margin-top: 20px;">Get Started</h2>
+            <p style="color: #888; font-size: 18px;">Click one of the buttons above to begin your trading analysis</p>
+        </div>
+        
+        <style>
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-30px);
+            }
+            60% {
+                transform: translateY(-15px);
+            }
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+    
+    # Process data when loaded
+    elif st.session_state.data_loaded:
+        # Handle both uploaded files and demo files
+        if 'demo_file' in st.session_state:
+            parser = TradeParser()
+            trades_df = parser.parse_csv(st.session_state.demo_file)
+            st.session_state.trades_data = trades_df
+            
+        if 'trades_data' in st.session_state:
+            trades_df = st.session_state.trades_data
+            
+            # Show different success message for demo vs uploaded
+            if 'demo_file' in st.session_state:
+                demo_name = st.session_state.demo_file.split('/')[-1].replace('_', ' ').replace('.csv', '').title()
+                st.success(f"✅ Loaded {len(trades_df)} trades from {demo_name}")
+            else:
+                st.success(f"✅ Loaded {len(trades_df)} trades")
+            
+            try:
+                matcher = TradeMatcher()
+                closed_trades = matcher.match_trades(trades_df)
+                
+                if closed_trades.empty:
+                    st.warning("No closed trades found in the data")
+                    return
+                
+                summary_stats = matcher.get_summary_stats(closed_trades)
+                
+                st.markdown("## Overview")
+                st.markdown("*Here's what's working, what's not, and how to improve*")
+                
+                coach = TradingCoach()
+                coach_insights = coach.generate_coach_insights(closed_trades)
+                
+                display_coach_dashboard(coach_insights, closed_trades)
+                
+                st.markdown("---")
+                st.markdown("### 🔬 Advanced Analysis")
+                
+                tab1, tab2, tab3 = st.tabs([
+                    "📈 Trade Analysis", 
+                    "🔍 What-If Analysis",
+                    "📋 All Trade Details"
+                ])
+                
+                with tab1:
+                    display_trade_analysis(closed_trades)
+                
+                with tab2:
+                    display_whatif_analysis(closed_trades)
+                
+                with tab3:
+                    display_trade_details(closed_trades)
+                    
+            except Exception as e:
+                st.error(f"Error processing file: {str(e)}")
+                logger.error(f"Error: {str(e)}", exc_info=True)
 
 def display_trade_analysis(closed_trades: pd.DataFrame):
     st.header("📈 Trade Analysis")
